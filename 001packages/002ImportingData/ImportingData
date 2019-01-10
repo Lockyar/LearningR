@@ -30,7 +30,7 @@ str(hotdogs2)
 
 #readr package is more simplier and powerful than utils package.
 #read.table() = read_delim() ; read.csv() = read_csv() ; read.delim() = read_tsv() "tsv = tab separeted values"
-install.package("readr")
+install.packages("readr")
 library(readr)
 potatoes <- read_csv("potatoes.csv")
 
@@ -59,7 +59,7 @@ hotdogs_factor <- read_tsv("hotdogs.txt", col_names = c("type", "calories", "sod
 summary(hotdogs_factor)
 
 #data.table package
-install.package("data.table")
+install.packages("data.table")
 library(data.table)
 potatoes <- fread("potatoes.csv")
 
@@ -67,3 +67,84 @@ potatoes <- fread("potatoes.csv")
 potatoes <- fread("potatoes.csv", select = c(6, 8))
 plot(potatoes$texture, potatoes$moistness)
 
+#Importing Excel Data. readxl package. excel_sheets() list different sheets; and read_excel() actually import data into R.
+install.packages("readxl")
+library(readxl)
+
+#excel_sheets() lets you know what sheets are in the file. But it does not imported anything yet.
+excel_sheets("urbanpop.xlsx")
+
+#importing an excel sheet.
+pop_1 <- read_excel("urbanpop.xlsx", sheet = 1)
+pop_2 <- read_excel("urbanpop.xlsx", sheet = 2)
+pop_3 <- read_excel("urbanpop.xlsx", sheet = 3)
+
+pop_list <- list(pop_1, pop_2, pop_3)
+
+#Using lapply() for calling multiple sheets
+pop_list <- lapply(excel_sheets("urbanpop.xlsx"), read_excel, path = "urbanpop.xlsx")
+
+#Other characteristics of read_excel() you can use col_names = TRUE or FALSE, COl_types =c("text", "date", "numeric", "blank(it ignores this column")
+#paste0("year_", 1960:1966) its a shortcut to specify year_1960, year_1961.... year_1966
+pop_a <- read_excel("urbanpop_nonames.xlsx", sheet = 1, col_names = FALSE)
+cols <- c("country", paste0("year_", 1960:1966)) 
+pop_b <- read_excel("urbanpop_nonames.xlsx", sheet = 1, col_names = cols)
+
+#Using skip = a number of rows we want R to drop from the excel sheet.
+urbanpop_sel <- read_excel("urbanpop.xlsx", sheet = 2, col_names = FALSE, skip = 21)
+urbanpop_sel[1, ]
+
+#gdata package
+install.packages("gdata")
+library(gdata)
+read.xls("cities.xls")
+urban_pop <- read.xls("urbanpop.xls", sheet = 2)
+head(urban_pop, n = 11)
+
+#all the options available in the utils package can run in the read.xls
+urban_pop <- read.xls("urbanpop.xls", sheet = 2, skip = 50, header = FALSE, stringsAsFactors = FALSE, col_names = cols)
+
+#Using cbind() to add the sheets together, na.omit() removes all rows with NA
+path <- "urbanpop.xls"
+urban_sheet1 <- read.xls(path, sheet = 1, stringsAsFactors = FALSE)
+urban_sheet2 <- read.xls(path, sheet = 2, stringsAsFactors = FALSE)
+urban_sheet3 <- read.xls(path, sheet = 3, stringsAsFactors =FALSE)
+
+urban <- cbind(urban_sheet1, urban_sheet2[-1], urban_sheet3[-1])
+urban_clean <- na.omit(urban)
+
+#XLConnect package lets you work in R with excel data and then return it to excel.
+install.packages("XLConnect")
+library(XLConnect)
+#loadWorkbook() and getSheets() = to excel_sheets(), readWorksheet()
+my_book <- loadWorkbook("urbanpop.xlsx")
+getSheets(my_book)
+readWorksheet(my_book, sheet = 2)
+
+#Selecting columns
+urbanpop_sel <- readWorksheet(my_book, sheet = 2, startCol = 3, endCol = 5)
+countries <- readWorksheet(my_book, sheet = 2, startCol = 1, endCol = 1)
+selection <- cbind(countries, urbanpop_sel)
+selection
+
+#Create a spreadsheet in R. createSheet(my_book, "data_summary")
+my_book <- loadWorkbook("urbanpop.xlsx")
+createSheet(my_book, "data_summary")
+getSheets(my_book)
+
+#Saving a spreadsheet in R as a xlsx document.
+sheets <- getSheets(my_book)[1:3]
+dims <- sapply(sheets, function(x) dim(readWorksheet(my_book, sheet = x)), USE.NAMES = FALSE)
+summ <- data.frame(sheets = sheets, nrows = dims[1, ], ncols = dims[2, ])
+saveWorkbook(my_book, "summary.xlsx")
+
+#renaming a sheet
+renameSheet(my_book, sheet = 4, "summary.xlsx")
+getSheets(my_book)
+saveWorkbook(my_book, "renamed.xlsx")
+
+#deleting a sheet
+my_book <- loadWorkbook("renamed.xlsx")
+getSheets(my_book)
+removeSheet(my_book, "summary")
+saveWorkbook(my_book, "clean.xlsx")
