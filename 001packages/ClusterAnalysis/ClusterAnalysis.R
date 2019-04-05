@@ -362,4 +362,3 @@ sil_df <- data.frame(
 ggplot(sil_df, aes(x = k, y = sil_width)) +
   geom_line() +
   scale_x_continuous(breaks = 2:10)
-
