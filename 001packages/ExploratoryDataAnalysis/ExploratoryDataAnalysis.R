@@ -288,3 +288,11 @@ email %>%
   filter(dollar > 10) %>%
   ggplot(aes(x = spam)) +
   geom_bar()
+
+# Reorder levels
+email$number <- factor(email$number, c("none", "small", "big"))
+
+# Construct plot of number
+ggplot(email, aes(number)) +
+  geom_bar() +
+  facet_wrap(~ spam)
